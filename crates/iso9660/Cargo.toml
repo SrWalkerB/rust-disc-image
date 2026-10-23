@@ -1,0 +1,17 @@
+[package]
+name = "iso9660"
+description = "Read-only ISO 9660 file system over a sector source"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+disc-image.workspace = true
+
+[dev-dependencies]
+iso-test-builder.workspace = true
+
+[lints]
+workspace = true

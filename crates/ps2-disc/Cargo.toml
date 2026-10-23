@@ -1,0 +1,18 @@
+[package]
+name = "ps2-disc"
+description = "Identifies PlayStation 2 discs: layers, SYSTEM.CNF, boot ELF and IOP modules"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+disc-image.workspace = true
+iso9660.workspace = true
+
+[dev-dependencies]
+iso-test-builder.workspace = true
+
+[lints]
+workspace = true

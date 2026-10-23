@@ -2,7 +2,12 @@
 
 Bibliotecas Rust para ler imagens de disco óptico: acesso a setores, sistema de arquivos ISO 9660 e metadados de discos de PlayStation 2.
 
-Status: planejamento. Nenhum código foi implementado ainda.
+Status: primeira versão dos três crates, testada com imagens sintéticas e validada em leitura de uma imagem real de DVD de dupla camada. Ainda não há fuzzing.
+
+```powershell
+cargo test --workspace
+cargo run -p ps2-disc --example ps2-info -- "caminho\para\imagem.iso"
+```
 
 ## Crates
 
@@ -16,15 +21,20 @@ O repositório será um workspace Cargo com três crates de biblioteca, em camad
 
 Os crates `disc-image` e `iso9660` não conhecem nenhum console. Tudo que for específico do PS2 fica em `ps2-disc`, e tudo que for específico de um jogo fica no projeto que usa estas bibliotecas.
 
-Layout planejado:
+Layout:
 
 ```text
 Cargo.toml          workspace
 crates/
-  disc-image/
-  iso9660/
-  ps2-disc/
+  disc-image/       IsoFile (arquivo .iso) e MemoryImage, sobre o trait SectorSource
+  iso9660/          Volume: read_dir, lookup, walk, read_at, read_to_vec
+  ps2-disc/         Ps2Disc: camadas, SYSTEM.CNF, ELF de boot, arquivos e IRX
+  iso-test-builder/ monta imagens sintéticas para os testes (não publicado)
 ```
+
+## Dupla camada
+
+Verificado em uma imagem real de DVD9 de PS2: a camada 1 é um segundo volume ISO 9660 cujo setor 0 fica 16 setores antes do fim do volume da camada 0, de modo que seu descritor primário aparece logo depois da camada 0. Os LBAs gravados na camada 1 são relativos a esse início. `Volume::open_at` abre um volume a partir de qualquer LBA base, e `Ps2Disc::open` detecta a segunda camada dessa forma. Todas as entradas expõem LBAs absolutos na imagem.
 
 ## Escopo inicial
 
@@ -41,9 +51,11 @@ crates/
 - **Sem dependências de aplicação.** Nada de parsing de argumentos ou saída de terminal nos crates; isso fica no programa que os usa.
 - **Testes sem dados protegidos.** Os testes usam imagens pequenas e sintéticas. Nenhuma imagem de jogo comercial entra no repositório.
 
-## Pontos a verificar
+## Pendências
 
-- **DVD de dupla camada:** confirmar em uma imagem real como o sistema de arquivos da segunda camada é organizado. O PCSX2 procura um segundo descritor de volume na quebra de camada; isso define se `iso9660` precisa tratar mais de um volume por imagem.
+- **Fuzzing** dos parsers de descritor e de diretório com `cargo fuzz`.
+- **Cabeçalho ELF** em `ps2-disc`.
+- **Nome do crate `iso9660`:** já existe um crate com esse nome no crates.io; precisa mudar antes de publicar.
 - **Crates existentes:** crates de ISO 9660 já publicados, como `cdfs`, servem como referência e para comparar resultados nos testes.
 
 ## Uso previsto
