@@ -52,6 +52,14 @@ fn run(path: &std::ffi::OsStr) -> Result<(), Box<dyn std::error::Error>> {
         elf.lba(),
         elf.size()
     );
+    let header = disc.boot_elf_header()?;
+    println!("  machine {}, entry {:#010x}", header.machine, header.entry);
+    for seg in &header.segments {
+        println!(
+            "  segment type {} offset {:#x} vaddr {:#010x} file {:#x} mem {:#x} flags {}",
+            seg.kind, seg.offset, seg.vaddr, seg.file_size, seg.mem_size, seg.flags
+        );
+    }
 
     println!("files:");
     for file in disc.files()? {

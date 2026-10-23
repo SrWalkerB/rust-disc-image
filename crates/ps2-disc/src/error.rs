@@ -19,6 +19,8 @@ pub enum Error {
     UnsupportedBootDevice(String),
     /// The file named by `BOOT2` is not on layer 0.
     BootFileNotFound(String),
+    /// The boot ELF header is invalid.
+    Elf(&'static str),
 }
 
 impl fmt::Display for Error {
@@ -32,6 +34,7 @@ impl fmt::Display for Error {
                 write!(f, "BOOT2 does not point to cdrom0: {boot2}")
             }
             Self::BootFileNotFound(path) => write!(f, "boot file {path} not found on layer 0"),
+            Self::Elf(reason) => write!(f, "invalid ELF: {reason}"),
         }
     }
 }

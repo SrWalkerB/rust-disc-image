@@ -6,6 +6,7 @@
 //! begins right after layer 0, and its LBAs are relative to that start.
 //! [`Ps2Disc::open`] finds both and reports absolute LBAs for every file.
 
+mod elf;
 mod error;
 mod system_cnf;
 
@@ -14,6 +15,7 @@ use std::sync::Arc;
 use disc_image::SectorSource;
 use iso9660::{DirEntry, Volume};
 
+pub use elf::{ElfHeader, MACHINE_MIPS, SEGMENT_LOAD, Segment};
 pub use error::{Error, Result};
 pub use system_cnf::{SystemCnf, serial_from_boot_path};
 
@@ -83,6 +85,22 @@ impl<S: SectorSource> Ps2Disc<S> {
             .lookup(path)?
             .filter(|e| !e.is_dir())
             .ok_or_else(|| Error::BootFileNotFound(path.to_owned()))
+    }
+
+    /// Reads the header and program headers of the boot ELF without loading
+    /// the whole file.
+    pub fn boot_elf_header(&self) -> Result<ElfHeader> {
+        let layer0 = &self.layers[0];
+        let elf = self.boot_elf()?;
+        let mut head = [0u8; elf::HEADER_LEN];
+        let read = layer0.read_at(&elf, 0, &mut head)?;
+        let (mut header, range) = ElfHeader::parse_file_header(&head[..read])?;
+        let mut table = vec![0u8; range.len()];
+        if layer0.read_at(&elf, range.start as u64, &mut table)? != table.len() {
+            return Err(Error::Elf("program headers past the end of the file"));
+        }
+        header.segments = elf::parse_segments(&table);
+        Ok(header)
     }
 
     /// Lists every file on every layer, in layer then path order.
