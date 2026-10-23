@@ -1,0 +1,6 @@
+/target
+*.iso
+*.bin
+*.cue
+*.cso
+*.chd
